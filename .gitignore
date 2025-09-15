@@ -1,0 +1,99 @@
+# Maven 编译输出目录
+target/
+*/target/
+
+# IDE 相关文件
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Eclipse 相关
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+
+# IntelliJ IDEA 相关
+*.iws
+out/
+
+# NetBeans 相关
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# 操作系统相关
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Java 相关
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Maven 相关
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle 相关
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# 测试报告
+surefire-reports/
+failsafe-reports/
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+*~
+
+# 备份文件
+*.bak
+*.backup
+
+# 编辑器临时文件
+.#*
+#*#
+
+# Spring Boot 相关
+spring-boot-*.jar
+!spring-boot-maven-plugin*.jar
+
+# 本地配置文件
+application-local.properties
+application-local.yml

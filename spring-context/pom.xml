@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>simple-spring-framework</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>spring-context</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Spring Context</name>
+  <description>Spring 应用上下文</description>
+
+  <dependencies>
+    <!-- 内部依赖 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>spring-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>spring-beans</artifactId>
+    </dependency>
+
+    <!-- 日志依赖 -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!-- 测试依赖 -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
