@@ -126,15 +126,27 @@
     - 编写 Bean 创建和依赖注入的单元测试
     - _需求: 1.2, 1.4, 1.5_
 
-- [ ] 5. 实现 spring-context 模块核心功能
-  - [ ] 5.1 实现包扫描机制
+- [x] 5. 实现 spring-context 模块核心功能
+
+
+
+
+
+
+  - [x] 5.1 实现包扫描机制
+
+
+
+
     - 创建 ClassPathScanner 类，扫描指定包路径下的类文件
     - 实现注解识别逻辑，检测带有 @Component、@Controller 等注解的类
     - 实现 JDK 1.7 兼容的文件系统遍历和类加载机制，使用 spring-core 的工具类
     - 编写包扫描功能的单元测试，验证不同包结构的扫描结果
     - _需求: 1.1, 6.1_
 
-  - [ ] 5.2 实现 ApplicationContext
+  - [x] 5.2 实现 ApplicationContext
+
+
     - 创建 ApplicationContext 接口，定义应用上下文的核心功能
     - 实现 AnnotationConfigApplicationContext 类，支持注解驱动的配置
     - 集成包扫描、Bean 定义注册和 Bean 创建功能
@@ -171,14 +183,14 @@
     - _需求: 1.5_
 
 - [ ] 7. 实现 Bean 生命周期管理
-  - [ ] 5.1 实现生命周期注解支持
+  - [ ] 7.1 实现生命周期注解支持
     - 创建 @PostConstruct 和 @PreDestroy 注解
     - 实现 BeanPostProcessor 接口，处理 Bean 初始化前后的回调
     - 在 Bean 创建流程中集成生命周期方法的调用
     - 编写生命周期方法的单元测试，验证调用时机和顺序
     - _需求: 6.3, 6.4_
 
-  - [ ] 5.2 实现循环依赖检测
+  - [ ] 7.2 实现循环依赖检测
     - 创建 CircularDependencyDetector 类，检测 Bean 之间的循环依赖
     - 实现依赖图构建和环路检测算法
     - 在 Bean 创建过程中集成循环依赖检测

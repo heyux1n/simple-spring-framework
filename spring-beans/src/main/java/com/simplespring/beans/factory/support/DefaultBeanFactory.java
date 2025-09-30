@@ -344,11 +344,11 @@ public class DefaultBeanFactory implements BeanFactory {
   }
 
   /**
-   * 获取 Bean 注册表（用于测试）
+   * 获取 Bean 注册表（用于测试和内部访问）
    * 
    * @return Bean 注册表
    */
-  protected BeanRegistry getBeanRegistry() {
+  public BeanRegistry getBeanRegistry() {
     return beanRegistry;
   }
 }
