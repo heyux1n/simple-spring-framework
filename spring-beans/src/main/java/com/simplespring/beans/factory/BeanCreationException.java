@@ -21,6 +21,16 @@ public class BeanCreationException extends RuntimeException {
   /**
    * 构造函数
    * 
+   * @param message 异常消息
+   */
+  public BeanCreationException(String message) {
+    super(message);
+    this.beanName = null;
+  }
+
+  /**
+   * 构造函数
+   * 
    * @param beanName Bean 名称
    * @param message  异常消息
    */

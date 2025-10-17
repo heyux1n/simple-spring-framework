@@ -52,6 +52,11 @@ public class DefaultBeanFactory implements BeanFactory {
   private final LifecycleProcessor lifecycleProcessor;
 
   /**
+   * 循环依赖检测器
+   */
+  private final CircularDependencyDetector circularDependencyDetector;
+
+  /**
    * 构造函数
    */
   public DefaultBeanFactory() {
@@ -61,6 +66,7 @@ public class DefaultBeanFactory implements BeanFactory {
     this.methodInjector = new MethodInjector(beanRegistry);
     this.beanPostProcessors = new ArrayList<BeanPostProcessor>();
     this.lifecycleProcessor = new LifecycleProcessor();
+    this.circularDependencyDetector = new CircularDependencyDetector(beanRegistry);
 
     // 设置 BeanFactory 引用以支持依赖创建
     this.constructorInjector.setBeanFactory(this);
@@ -178,6 +184,17 @@ public class DefaultBeanFactory implements BeanFactory {
       // 检查循环依赖
       if (beanDefinition.isSingleton()) {
         beanRegistry.beforeSingletonCreation(beanName);
+
+        // 使用循环依赖检测器进行更详细的检测
+        if (circularDependencyDetector.hasCircularDependency(beanName)) {
+          java.util.List<java.util.List<String>> cycles = circularDependencyDetector.detectCircularDependencies();
+          for (java.util.List<String> cycle : cycles) {
+            if (cycle.contains(beanName)) {
+              throw new CircularDependencyException(beanName,
+                  "检测到循环依赖", cycle);
+            }
+          }
+        }
       }
 
       // 创建 Bean 实例
@@ -303,6 +320,9 @@ public class DefaultBeanFactory implements BeanFactory {
 
     // 注册到注册表
     beanRegistry.registerBeanDefinition(beanName, beanDefinition);
+
+    // 重新构建依赖图
+    circularDependencyDetector.buildDependencyGraph();
   }
 
   /**
@@ -483,5 +503,43 @@ public class DefaultBeanFactory implements BeanFactory {
    */
   public BeanRegistry getBeanRegistry() {
     return beanRegistry;
+  }
+
+  /**
+   * 获取循环依赖检测器
+   * 
+   * @return 循环依赖检测器
+   */
+  public CircularDependencyDetector getCircularDependencyDetector() {
+    return circularDependencyDetector;
+  }
+
+  /**
+   * 构建依赖图并检测循环依赖
+   * 通常在所有 Bean 定义注册完成后调用
+   * 
+   * @throws CircularDependencyException 如果检测到循环依赖
+   */
+  public void validateDependencies() {
+    // 构建依赖图
+    circularDependencyDetector.buildDependencyGraph();
+
+    // 检测循环依赖
+    java.util.List<java.util.List<String>> cycles = circularDependencyDetector.detectCircularDependencies();
+    if (!cycles.isEmpty()) {
+      java.util.List<String> firstCycle = cycles.get(0);
+      throw new CircularDependencyException("检测到循环依赖", firstCycle);
+    }
+  }
+
+  /**
+   * 检查指定 Bean 是否存在循环依赖
+   * 
+   * @param beanName Bean 名称
+   * @return 如果存在循环依赖返回 true，否则返回 false
+   */
+  public boolean hasCircularDependency(String beanName) {
+    circularDependencyDetector.buildDependencyGraph();
+    return circularDependencyDetector.hasCircularDependency(beanName);
   }
 }
