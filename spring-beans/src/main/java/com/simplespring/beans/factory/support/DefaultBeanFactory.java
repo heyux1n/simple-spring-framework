@@ -2,6 +2,7 @@ package com.simplespring.beans.factory.support;
 
 import com.simplespring.beans.factory.*;
 import com.simplespring.beans.factory.config.BeanDefinition;
+import com.simplespring.beans.factory.config.BeanPostProcessor;
 import com.simplespring.beans.factory.config.Scope;
 import com.simplespring.core.util.ClassUtils;
 import com.simplespring.core.util.StringUtils;
@@ -9,6 +10,7 @@ import com.simplespring.core.util.StringUtils;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,6 +42,16 @@ public class DefaultBeanFactory implements BeanFactory {
   private final MethodInjector methodInjector;
 
   /**
+   * Bean 后处理器列表
+   */
+  private final List<BeanPostProcessor> beanPostProcessors;
+
+  /**
+   * 生命周期处理器
+   */
+  private final LifecycleProcessor lifecycleProcessor;
+
+  /**
    * 构造函数
    */
   public DefaultBeanFactory() {
@@ -47,11 +59,16 @@ public class DefaultBeanFactory implements BeanFactory {
     this.constructorInjector = new ConstructorInjector(beanRegistry);
     this.fieldInjector = new FieldInjector(beanRegistry);
     this.methodInjector = new MethodInjector(beanRegistry);
+    this.beanPostProcessors = new ArrayList<BeanPostProcessor>();
+    this.lifecycleProcessor = new LifecycleProcessor();
 
     // 设置 BeanFactory 引用以支持依赖创建
     this.constructorInjector.setBeanFactory(this);
     this.fieldInjector.setBeanFactory(this);
     this.methodInjector.setBeanFactory(this);
+
+    // 注册默认的生命周期处理器
+    addBeanPostProcessor(this.lifecycleProcessor);
   }
 
   @Override
@@ -256,10 +273,15 @@ public class DefaultBeanFactory implements BeanFactory {
    * @return 初始化后的 Bean 实例
    */
   private Object initializeBean(Object beanInstance, String beanName, BeanDefinition beanDefinition) {
-    // 这里可以添加 Bean 后处理器的调用
-    // 例如：@PostConstruct 注解的方法调用
+    Object wrappedBean = beanInstance;
 
-    return beanInstance;
+    // 调用 BeanPostProcessor 的 postProcessBeforeInitialization 方法
+    wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+
+    // 调用 BeanPostProcessor 的 postProcessAfterInitialization 方法
+    wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+
+    return wrappedBean;
   }
 
   @Override
@@ -341,6 +363,117 @@ public class DefaultBeanFactory implements BeanFactory {
 
     String shortName = ClassUtils.getShortName(beanClass);
     return Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1);
+  }
+
+  /**
+   * 应用 BeanPostProcessor 的 postProcessBeforeInitialization 方法
+   * 
+   * @param existingBean 现有的 Bean 实例
+   * @param beanName     Bean 名称
+   * @return 处理后的 Bean 实例
+   */
+  private Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName) {
+    Object result = existingBean;
+    for (BeanPostProcessor processor : beanPostProcessors) {
+      Object current = processor.postProcessBeforeInitialization(result, beanName);
+      if (current == null) {
+        return result;
+      }
+      result = current;
+    }
+    return result;
+  }
+
+  /**
+   * 应用 BeanPostProcessor 的 postProcessAfterInitialization 方法
+   * 
+   * @param existingBean 现有的 Bean 实例
+   * @param beanName     Bean 名称
+   * @return 处理后的 Bean 实例
+   */
+  private Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName) {
+    Object result = existingBean;
+    for (BeanPostProcessor processor : beanPostProcessors) {
+      Object current = processor.postProcessAfterInitialization(result, beanName);
+      if (current == null) {
+        return result;
+      }
+      result = current;
+    }
+    return result;
+  }
+
+  /**
+   * 添加 BeanPostProcessor
+   * 
+   * @param beanPostProcessor Bean 后处理器
+   */
+  public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
+    if (beanPostProcessor != null && !beanPostProcessors.contains(beanPostProcessor)) {
+      beanPostProcessors.add(beanPostProcessor);
+    }
+  }
+
+  /**
+   * 移除 BeanPostProcessor
+   * 
+   * @param beanPostProcessor Bean 后处理器
+   */
+  public void removeBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
+    beanPostProcessors.remove(beanPostProcessor);
+  }
+
+  /**
+   * 获取所有 BeanPostProcessor
+   * 
+   * @return BeanPostProcessor 列表
+   */
+  public List<BeanPostProcessor> getBeanPostProcessors() {
+    return new ArrayList<BeanPostProcessor>(beanPostProcessors);
+  }
+
+  /**
+   * 销毁 Bean（调用 @PreDestroy 方法）
+   * 
+   * @param beanName Bean 名称
+   */
+  public void destroyBean(String beanName) {
+    Object bean = beanRegistry.getSingleton(beanName);
+    if (bean != null) {
+      destroyBean(bean, beanName);
+      beanRegistry.removeSingleton(beanName);
+    }
+  }
+
+  /**
+   * 销毁 Bean 实例
+   * 
+   * @param bean     Bean 实例
+   * @param beanName Bean 名称
+   */
+  public void destroyBean(Object bean, String beanName) {
+    if (bean != null) {
+      lifecycleProcessor.invokePreDestroyMethods(bean, beanName);
+    }
+  }
+
+  /**
+   * 销毁所有单例 Bean
+   */
+  public void destroySingletons() {
+    String[] beanNames = beanRegistry.getSingletonNames();
+    for (String beanName : beanNames) {
+      destroyBean(beanName);
+    }
+  }
+
+  /**
+   * 获取生命周期处理器
+   * 
+   * @return 生命周期处理器
+   */
+  public LifecycleProcessor getLifecycleProcessor() {
+    return lifecycleProcessor;
   }
 
   /**
