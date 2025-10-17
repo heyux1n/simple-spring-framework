@@ -55,6 +55,9 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
   /** 类路径扫描器 */
   private final ClassPathScanner classPathScanner;
 
+  /** 切面处理器 */
+  private final AspectProcessor aspectProcessor;
+
   /** 要扫描的基础包路径 */
   private final String[] basePackages;
 
@@ -101,6 +104,7 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
     this.basePackages = basePackages.clone();
     this.beanFactory = new DefaultBeanFactory();
     this.classPathScanner = new ClassPathScanner();
+    this.aspectProcessor = new AspectProcessor(beanFactory);
     this.id = generateId();
     this.displayName = generateDisplayName();
 
@@ -127,10 +131,13 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
         // 2. 扫描组件类
         scanComponents();
 
-        // 3. 实例化所有单例 Bean
+        // 3. 处理切面
+        processAspects();
+
+        // 4. 实例化所有单例 Bean
         preInstantiateSingletons();
 
-        // 4. 标记容器为活动状态
+        // 5. 标记容器为活动状态
         active.set(true);
 
       } catch (Exception e) {
@@ -300,6 +307,14 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
   }
 
   /**
+   * 处理切面
+   */
+  private void processAspects() {
+    String[] beanNames = beanFactory.getBeanDefinitionNames();
+    aspectProcessor.processAspects(beanNames);
+  }
+
+  /**
    * 预实例化所有单例 Bean
    */
   private void preInstantiateSingletons() {
@@ -311,7 +326,15 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
       if (beanDefinition != null && beanDefinition.isSingleton()) {
         try {
           // 触发 Bean 创建
-          beanFactory.getBean(beanName);
+          Object bean = beanFactory.getBean(beanName);
+
+          // 应用 AOP 代理
+          Object proxiedBean = aspectProcessor.postProcessAfterInitialization(beanName, bean);
+
+          // 如果创建了代理，更新单例缓存
+          if (proxiedBean != bean) {
+            beanFactory.getBeanRegistry().registerSingleton(beanName, proxiedBean);
+          }
         } catch (Exception e) {
           throw new BeanCreationException(beanName, "预实例化单例 Bean 失败", e);
         }
@@ -391,5 +414,14 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
    */
   protected DefaultBeanFactory getBeanFactory() {
     return beanFactory;
+  }
+
+  /**
+   * 获取切面处理器（用于测试）
+   * 
+   * @return 切面处理器
+   */
+  protected AspectProcessor getAspectProcessor() {
+    return aspectProcessor;
   }
 }

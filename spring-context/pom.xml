@@ -26,6 +26,10 @@
       <groupId>com.example</groupId>
       <artifactId>spring-beans</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>spring-aop</artifactId>
+    </dependency>
 
     <!-- 日志依赖 -->
     <dependency>
