@@ -299,36 +299,51 @@
     - 编写 AOP 和 spring-context 集成的测试，验证切面对 Bean 的增强
     - _需求: 2.1, 2.2_
 
-- [ ] 9. 实现 spring-webmvc 模块核心功能
-  - [ ] 9.1 创建请求映射模型
+- [x] 9. 实现 spring-webmvc 模块核心功能
+
+
+
+
+
+  - [x] 9.1 创建请求映射模型
+
+
     - 实现 RequestMappingInfo 类，存储请求映射的详细信息
     - 创建 HandlerMethod 类，封装控制器方法的元数据
     - 实现请求路径和 HTTP 方法的匹配逻辑
     - 编写请求映射模型的单元测试
     - _需求: 3.2_
 
-  - [ ] 9.2 实现 HandlerMapping
+  - [x] 9.2 实现 HandlerMapping
+
+
     - 创建 HandlerMapping 接口，定义处理器映射的核心方法
     - 实现 RequestMappingHandlerMapping 类，基于注解的处理器映射
     - 扫描控制器类和方法，构建请求映射表
     - 编写处理器映射的单元测试，验证不同请求的路由
     - _需求: 3.1, 3.2_
 
-  - [ ] 9.3 实现参数解析和绑定
+  - [x] 9.3 实现参数解析和绑定
+
+
     - 创建 ParameterResolver 接口，定义参数解析的规范
     - 实现基本类型参数解析器（String、int、boolean 等）
     - 实现 HttpServletRequest 和 HttpServletResponse 参数注入
     - 编写参数解析的单元测试，验证不同参数类型的绑定
     - _需求: 3.5_
 
-  - [ ] 9.4 实现 DispatcherServlet
+  - [x] 9.4 实现 DispatcherServlet
+
+
     - 创建 DispatcherServlet 类，继承 HttpServlet 处理 HTTP 请求
     - 实现请求分发逻辑，集成 HandlerMapping 和参数解析
     - 实现控制器方法的调用和异常处理
     - 编写 DispatcherServlet 的集成测试，验证完整的请求处理流程
     - _需求: 3.3_
 
-  - [ ] 9.5 实现视图解析和渲染
+  - [x] 9.5 实现视图解析和渲染
+
+
     - 创建 ViewResolver 接口，定义视图解析的规范
     - 实现简单的字符串视图解析器，支持 JSON 和文本响应
     - 实现视图渲染逻辑，将控制器返回值转换为 HTTP 响应
