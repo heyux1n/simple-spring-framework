@@ -350,29 +350,42 @@
     - 编写视图解析和渲染的单元测试
     - _需求: 3.4_
 
-- [ ] 10. 创建 spring-example 示例应用模块
-  - [ ] 10.1 创建业务服务层
+- [x] 10. 创建 spring-example 示例应用模块
+
+
+
+
+
+  - [x] 10.1 创建业务服务层
+
+
     - 实现 UserService 接口和实现类，演示依赖注入功能
     - 实现 OrderService 类，演示 AOP 切面的应用
     - 创建业务实体类（User、Order），提供基本的业务逻辑
     - 编写业务服务的单元测试，验证业务逻辑的正确性
     - _需求: 4.1_
 
-  - [ ] 10.2 创建 AOP 切面示例
+  - [x] 10.2 创建 AOP 切面示例
+
+
     - 实现 LoggingAspect 类，演示方法执行日志记录
     - 实现 PerformanceAspect 类，演示方法执行时间统计
     - 配置切面的切点表达式，应用到业务服务方法
     - 编写切面功能的集成测试，验证切面的执行效果
     - _需求: 4.2_
 
-  - [ ] 10.3 创建 MVC 控制器
+  - [x] 10.3 创建 MVC 控制器
+
+
     - 实现 UserController 类，提供用户相关的 HTTP 接口
     - 实现 OrderController 类，演示请求参数绑定和响应处理
     - 配置请求映射，支持不同的 HTTP 方法和路径
     - 编写控制器的集成测试，验证 HTTP 请求的处理
     - _需求: 4.3_
 
-  - [ ] 10.4 创建应用配置和启动类
+  - [x] 10.4 创建应用配置和启动类
+
+
     - 实现 AppConfig 配置类，使用 @Configuration 和 @Bean 注解
     - 创建 Application 主类，初始化 ApplicationContext 和 DispatcherServlet
     - 配置包扫描路径和组件自动发现
