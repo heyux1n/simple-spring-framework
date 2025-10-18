@@ -11,14 +11,16 @@ import static org.junit.Assert.*;
 public class TypeMismatchExceptionTest {
 
   @Test
-  public void testConstructorWithMessage() {
-    String message = "类型转换失败";
-    TypeMismatchException exception = new TypeMismatchException(message);
+  public void testConstructorWithNullValueAndType() {
+    Object value = null;
+    Class<?> requiredType = String.class;
+    TypeMismatchException exception = new TypeMismatchException(value, requiredType);
 
-    assertEquals(message, exception.getMessage());
-    assertNull(exception.getCause());
     assertNull(exception.getValue());
-    assertNull(exception.getRequiredType());
+    assertEquals(requiredType, exception.getRequiredType());
+    assertNull(exception.getCause());
+    assertTrue(exception.getMessage().contains("null"));
+    assertTrue(exception.getMessage().contains(requiredType.getName()));
   }
 
   @Test
@@ -82,8 +84,14 @@ public class TypeMismatchExceptionTest {
   }
 
   @Test
-  public void testGetErrorCode() {
-    TypeMismatchException exception = new TypeMismatchException("test", Integer.class);
-    assertEquals("typeMismatch", exception.getErrorCode());
+  public void testExceptionMessage() {
+    Object value = "test";
+    Class<?> requiredType = Integer.class;
+    TypeMismatchException exception = new TypeMismatchException(value, requiredType);
+
+    String message = exception.getMessage();
+    assertTrue("Message should contain value type", message.contains("String"));
+    assertTrue("Message should contain required type", message.contains("Integer"));
+    assertTrue("Message should contain conversion failure info", message.contains("Failed to convert"));
   }
 }

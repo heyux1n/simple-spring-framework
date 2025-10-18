@@ -1,5 +1,6 @@
 package com.simplespring.webmvc;
 
+import com.simplespring.context.ApplicationContext;
 import com.simplespring.core.annotation.RequestMethod;
 
 import javax.servlet.ServletException;
@@ -35,6 +36,11 @@ import java.io.PrintWriter;
 public class DispatcherServlet extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
+
+  /**
+   * 应用上下文
+   */
+  private ApplicationContext applicationContext;
 
   /**
    * 处理器映射器
@@ -295,5 +301,13 @@ public class DispatcherServlet extends HttpServlet {
 
   public void setViewResolver(ViewResolver viewResolver) {
     this.viewResolver = viewResolver;
+  }
+
+  public ApplicationContext getApplicationContext() {
+    return applicationContext;
+  }
+
+  public void setApplicationContext(ApplicationContext applicationContext) {
+    this.applicationContext = applicationContext;
   }
 }

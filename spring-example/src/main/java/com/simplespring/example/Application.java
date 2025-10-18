@@ -62,17 +62,9 @@ public class Application {
     logger.info("初始化 ApplicationContext...");
 
     try {
-      // 创建基于注解的应用上下文
-      applicationContext = new AnnotationConfigApplicationContext();
 
-      // 注册配置类
-      applicationContext.register(AppConfig.class);
-
-      // 设置包扫描路径
-      applicationContext.scan("com.simplespring.example");
-
-      // 刷新容器
-      applicationContext.refresh();
+      // 创建基于注解的应用上下文，直接扫描包路径
+      applicationContext = new AnnotationConfigApplicationContext("com.simplespring.example");
 
       logger.info("ApplicationContext 初始化完成");
 
@@ -114,9 +106,20 @@ public class Application {
     logger.info("=== 容器中的Bean信息 ===");
 
     try {
-      // 显示配置属性
-      AppConfig.AppProperties appProperties = applicationContext.getBean(AppConfig.AppProperties.class);
-      logger.info("应用属性: {}", appProperties);
+      // 显示所有注册的Bean名称
+      String[] beanNames = applicationContext.getBeanDefinitionNames();
+      logger.info("容器中注册的Bean数量: {}", beanNames.length);
+      for (String beanName : beanNames) {
+        logger.info("Bean名称: {}", beanName);
+      }
+
+      // 显示配置类信息
+      try {
+        AppConfig appConfig = applicationContext.getBean(AppConfig.class);
+        logger.info("配置类: {}", appConfig.getClass().getSimpleName());
+      } catch (Exception e) {
+        logger.warn("无法获取AppConfig Bean: {}", e.getMessage());
+      }
 
       // 显示服务Bean
       UserService userService = applicationContext.getBean(UserService.class);
@@ -126,8 +129,17 @@ public class Application {
       logger.info("订单服务: {}", orderService.getClass().getSimpleName());
 
       // 显示切面Bean
-      logger.info("日志切面: {}", applicationContext.getBean("loggingAspect").getClass().getSimpleName());
-      logger.info("性能切面: {}", applicationContext.getBean("performanceAspect").getClass().getSimpleName());
+      try {
+        logger.info("日志切面: {}", applicationContext.getBean("loggingAspect").getClass().getSimpleName());
+      } catch (Exception e) {
+        logger.warn("无法获取loggingAspect Bean: {}", e.getMessage());
+      }
+
+      try {
+        logger.info("性能切面: {}", applicationContext.getBean("performanceAspect").getClass().getSimpleName());
+      } catch (Exception e) {
+        logger.warn("无法获取performanceAspect Bean: {}", e.getMessage());
+      }
 
       // 显示控制器Bean
       logger.info("用户控制器: {}", applicationContext.getBean("userController").getClass().getSimpleName());

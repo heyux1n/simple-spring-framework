@@ -26,10 +26,6 @@
       <groupId>com.example</groupId>
       <artifactId>spring-beans</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>spring-context</artifactId>
-    </dependency>
 
     <!-- CGLIB 依赖 -->
     <dependency>

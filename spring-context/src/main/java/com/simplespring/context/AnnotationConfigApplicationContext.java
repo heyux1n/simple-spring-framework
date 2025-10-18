@@ -77,6 +77,18 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
   private final String id;
 
   /**
+   * 默认构造函数 - 不自动刷新
+   */
+  public AnnotationConfigApplicationContext() {
+    this.basePackages = new String[0];
+    this.beanFactory = new DefaultBeanFactory();
+    this.classPathScanner = new ClassPathScanner();
+    this.aspectProcessor = new AspectProcessor(beanFactory);
+    this.id = generateId();
+    this.displayName = generateDisplayName();
+  }
+
+  /**
    * 构造函数 - 扫描单个包
    * 
    * @param basePackage 基础包路径
@@ -423,5 +435,33 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
    */
   protected AspectProcessor getAspectProcessor() {
     return aspectProcessor;
+  }
+
+  /**
+   * 注册配置类
+   * 
+   * @param configClass 配置类
+   */
+  public void register(Class<?> configClass) {
+    if (configClass == null) {
+      throw new IllegalArgumentException("配置类不能为空");
+    }
+    registerComponent(configClass);
+  }
+
+  /**
+   * 扫描指定包路径
+   * 
+   * @param basePackage 基础包路径
+   */
+  public void scan(String basePackage) {
+    if (!StringUtils.hasText(basePackage)) {
+      throw new IllegalArgumentException("基础包路径不能为空");
+    }
+
+    Set<Class<?>> componentClasses = classPathScanner.scanPackage(basePackage);
+    for (Class<?> componentClass : componentClasses) {
+      registerComponent(componentClass);
+    }
   }
 }

@@ -6,6 +6,7 @@ import com.simplespring.core.annotation.PostConstruct;
 import com.simplespring.core.annotation.PreDestroy;
 import com.simplespring.core.util.ReflectionUtils;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +136,7 @@ public class LifecycleProcessor implements BeanPostProcessor {
    * @param annotationClass 注解类
    * @return 带有指定注解的方法列表
    */
-  private List<Method> scanLifecycleMethods(Class<?> beanClass, Class<?> annotationClass) {
+  private List<Method> scanLifecycleMethods(Class<?> beanClass, Class<? extends Annotation> annotationClass) {
     List<Method> methods = new ArrayList<Method>();
     Class<?> currentClass = beanClass;
 
