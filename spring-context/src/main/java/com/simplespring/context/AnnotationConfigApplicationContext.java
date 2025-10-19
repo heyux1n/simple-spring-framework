@@ -132,6 +132,7 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
       }
 
       try {
+        System.out.println("开始刷新容器...");
         // 记录启动时间
         this.startupDate = System.currentTimeMillis();
 
@@ -141,20 +142,26 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
         }
 
         // 2. 扫描组件类
+        System.out.println("开始扫描组件类...");
         scanComponents();
 
         // 3. 处理切面
+        System.out.println("开始处理切面...");
         processAspects();
 
         // 4. 实例化所有单例 Bean
+        System.out.println("开始实例化单例 Bean...");
         preInstantiateSingletons();
 
         // 5. 标记容器为活动状态
         active.set(true);
+        System.out.println("容器刷新完成");
 
       } catch (Exception e) {
         // 刷新失败，清理状态
         active.set(false);
+        System.out.println("容器刷新失败: " + e.getMessage());
+        e.printStackTrace();
         throw new RuntimeException("容器刷新失败", e);
       }
     }

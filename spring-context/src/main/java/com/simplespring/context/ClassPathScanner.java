@@ -61,6 +61,7 @@ public class ClassPathScanner {
       throw new IllegalArgumentException("基础包路径不能为空");
     }
 
+    System.out.println("开始扫描包: " + basePackage);
     Set<Class<?>> componentClasses = new HashSet<Class<?>>();
     String packagePath = basePackage.replace('.', '/');
 
@@ -71,21 +72,31 @@ public class ClassPathScanner {
       while (resources.hasMoreElements()) {
         URL resource = resources.nextElement();
         String protocol = resource.getProtocol();
+        System.out.println("找到资源: " + resource + ", 协议: " + protocol);
 
         if ("file".equals(protocol)) {
           // 处理文件系统中的类文件
           String filePath = resource.getFile();
           File packageDir = new File(filePath);
           if (packageDir.exists() && packageDir.isDirectory()) {
-            componentClasses.addAll(findClassesInDirectory(packageDir, basePackage, classLoader));
+            Set<Class<?>> classes = findClassesInDirectory(packageDir, basePackage, classLoader);
+            System.out.println("从目录扫描到 " + classes.size() + " 个组件类");
+            componentClasses.addAll(classes);
           }
         } else if ("jar".equals(protocol)) {
-          // 处理 JAR 文件中的类文件（暂不实现，留作扩展）
-          // 在简易框架中主要处理文件系统中的类
+          // 处理 JAR 文件中的类文件
+          Set<Class<?>> classes = findClassesInJar(resource, basePackage, classLoader);
+          System.out.println("从JAR扫描到 " + classes.size() + " 个组件类");
+          componentClasses.addAll(classes);
         }
       }
     } catch (IOException e) {
       throw new RuntimeException("扫描包路径失败: " + basePackage, e);
+    }
+
+    System.out.println("总共扫描到 " + componentClasses.size() + " 个组件类");
+    for (Class<?> clazz : componentClasses) {
+      System.out.println("  - " + clazz.getName());
     }
 
     return componentClasses;
@@ -132,6 +143,61 @@ public class ClassPathScanner {
           System.err.println("警告: 类依赖缺失 " + className + ": " + e.getMessage());
         }
       }
+    }
+
+    return classes;
+  }
+
+  /**
+   * 在 JAR 文件中查找组件类
+   * 
+   * @param resource    JAR 资源 URL
+   * @param packageName 包名
+   * @param classLoader 类加载器
+   * @return 找到的组件类集合
+   */
+  private Set<Class<?>> findClassesInJar(URL resource, String packageName, ClassLoader classLoader) {
+    Set<Class<?>> classes = new HashSet<Class<?>>();
+
+    try {
+      String jarPath = resource.getPath();
+      if (jarPath.startsWith("file:")) {
+        jarPath = jarPath.substring(5);
+      }
+      if (jarPath.contains("!")) {
+        jarPath = jarPath.substring(0, jarPath.indexOf("!"));
+      }
+
+      java.util.jar.JarFile jarFile = new java.util.jar.JarFile(jarPath);
+      java.util.Enumeration<java.util.jar.JarEntry> entries = jarFile.entries();
+
+      String packagePath = packageName.replace('.', '/');
+
+      while (entries.hasMoreElements()) {
+        java.util.jar.JarEntry entry = entries.nextElement();
+        String entryName = entry.getName();
+
+        if (entryName.startsWith(packagePath) && entryName.endsWith(".class")) {
+          String className = entryName.replace('/', '.').substring(0, entryName.length() - 6);
+
+          try {
+            Class<?> clazz = ClassUtils.forName(className, classLoader);
+            if (isComponentClass(clazz)) {
+              classes.add(clazz);
+            }
+          } catch (ClassNotFoundException e) {
+            // 忽略无法加载的类
+            System.err.println("警告: 无法加载类 " + className + ": " + e.getMessage());
+          } catch (NoClassDefFoundError e) {
+            // 忽略依赖缺失的类
+            System.err.println("警告: 类依赖缺失 " + className + ": " + e.getMessage());
+          }
+        }
+      }
+
+      jarFile.close();
+    } catch (Exception e) {
+      System.err.println("扫描 JAR 文件失败: " + e.getMessage());
     }
 
     return classes;

@@ -310,4 +310,66 @@ public class DispatcherServlet extends HttpServlet {
   public void setApplicationContext(ApplicationContext applicationContext) {
     this.applicationContext = applicationContext;
   }
+
+  /**
+   * 初始化 DispatcherServlet
+   * 扫描应用上下文中的控制器并注册请求映射
+   */
+  @Override
+  public void init() throws ServletException {
+    super.init();
+
+    if (applicationContext == null) {
+      throw new IllegalStateException("ApplicationContext 未设置");
+    }
+
+    // 扫描并注册所有控制器
+    scanAndRegisterControllers();
+  }
+
+  /**
+   * 扫描并注册控制器
+   */
+  private void scanAndRegisterControllers() {
+    // 获取所有 Bean 名称
+    String[] beanNames = applicationContext.getBeanDefinitionNames();
+
+    for (String beanName : beanNames) {
+      try {
+        Object bean = applicationContext.getBean(beanName);
+        Class<?> beanClass = bean.getClass();
+
+        // 检查是否是控制器
+        if (beanClass.isAnnotationPresent(com.simplespring.core.annotation.Controller.class)) {
+          registerController(beanClass, bean);
+          System.out.println("已注册控制器: " + beanClass.getSimpleName() + " (Bean名称: " + beanName + ")");
+        }
+      } catch (Exception e) {
+        System.err.println("注册控制器失败: " + beanName + ", 错误: " + e.getMessage());
+      }
+    }
+
+    // 显示注册的映射信息
+    displayMappingInfo();
+  }
+
+  /**
+   * 显示映射信息
+   */
+  private void displayMappingInfo() {
+    if (handlerMapping instanceof RequestMappingHandlerMapping) {
+      RequestMappingHandlerMapping rmhm = (RequestMappingHandlerMapping) handlerMapping;
+      RequestMappingInfo[] mappings = rmhm.getAllMappings();
+
+      System.out.println("=== 已注册的请求映射 ===");
+      System.out.println("映射数量: " + mappings.length);
+
+      for (RequestMappingInfo mapping : mappings) {
+        System.out.println(mapping.getMethod() + " " + mapping.getPath() + " -> " +
+            mapping.getHandlerMethod().getMethod().getDeclaringClass().getSimpleName() +
+            "." + mapping.getHandlerMethod().getMethod().getName());
+      }
+      System.out.println("========================");
+    }
+  }
 }

@@ -4,6 +4,7 @@ import com.simplespring.context.AnnotationConfigApplicationContext;
 import com.simplespring.example.config.AppConfig;
 import com.simplespring.example.entity.Order;
 import com.simplespring.example.entity.User;
+import com.simplespring.example.server.EmbeddedTomcatServer;
 import com.simplespring.example.service.OrderService;
 import com.simplespring.example.service.UserService;
 import com.simplespring.webmvc.DispatcherServlet;
@@ -14,8 +15,8 @@ import java.math.BigDecimal;
 
 /**
  * 应用主类
- * 初始化 ApplicationContext 和 DispatcherServlet
- * 演示完整的应用功能
+ * 初始化 ApplicationContext、DispatcherServlet 和嵌入式 HTTP 服务器
+ * 演示完整的应用功能，类似于 Spring Boot 的运行方式
  */
 public class Application {
 
@@ -23,21 +24,68 @@ public class Application {
 
   private AnnotationConfigApplicationContext applicationContext;
   private DispatcherServlet dispatcherServlet;
+  private EmbeddedTomcatServer server;
 
   public static void main(String[] args) {
     logger.info("=== 简易Spring框架示例应用启动 ===");
 
-    Application app = new Application();
+    // 解析命令行参数
+    boolean startServer = true;
+    boolean runDemo = false;
+    int port = 8080;
+
+    for (String arg : args) {
+      if ("--demo-only".equals(arg)) {
+        startServer = false;
+        runDemo = true;
+      } else if ("--no-demo".equals(arg)) {
+        runDemo = false;
+      } else if (arg.startsWith("--port=")) {
+        try {
+          port = Integer.parseInt(arg.substring(7));
+        } catch (NumberFormatException e) {
+          logger.warn("无效的端口号: {}, 使用默认端口 8080", arg.substring(7));
+        }
+      }
+    }
+
+    final Application app = new Application();
+    final boolean shouldStartServer = startServer;
+
     try {
       app.start();
-      app.demonstrateFeatures();
+
+      if (runDemo) {
+        app.demonstrateFeatures();
+      }
+
+      if (shouldStartServer) {
+        app.startHttpServer(port);
+
+        // 添加关闭钩子
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+          @Override
+          public void run() {
+            logger.info("接收到关闭信号，正在关闭应用...");
+            app.shutdown();
+          }
+        }));
+
+        // 等待服务器运行
+        app.awaitServer();
+      }
+
     } catch (Exception e) {
       logger.error("应用启动失败", e);
     } finally {
-      app.shutdown();
+      if (!shouldStartServer) {
+        app.shutdown();
+      }
     }
 
-    logger.info("=== 简易Spring框架示例应用结束 ===");
+    if (!shouldStartServer) {
+      logger.info("=== 简易Spring框架示例应用结束 ===");
+    }
   }
 
   /**
@@ -56,6 +104,54 @@ public class Application {
   }
 
   /**
+   * 启动 HTTP 服务器
+   */
+  public void startHttpServer(int port) {
+    logger.info("正在启动 HTTP 服务器...");
+
+    int actualPort = port;
+    int maxRetries = 5;
+
+    for (int retry = 0; retry < maxRetries; retry++) {
+      try {
+        // 创建嵌入式服务器
+        server = new EmbeddedTomcatServer(actualPort, "");
+        server.setDispatcherServlet(dispatcherServlet);
+
+        // 启动服务器
+        server.start();
+
+        logger.info("HTTP 服务器启动成功，端口: {}", actualPort);
+        return;
+
+      } catch (Exception e) {
+        if (e.getCause() instanceof java.net.BindException) {
+          logger.warn("端口 {} 已被占用，尝试端口 {}", actualPort, actualPort + 1);
+          actualPort++;
+
+          if (retry == maxRetries - 1) {
+            logger.error("尝试了 {} 个端口都被占用，启动失败", maxRetries);
+            throw new RuntimeException("无法找到可用端口启动服务器", e);
+          }
+        } else {
+          logger.error("HTTP 服务器启动失败", e);
+          throw new RuntimeException("HTTP 服务器启动失败", e);
+        }
+      }
+    }
+  }
+
+  /**
+   * 等待服务器运行
+   */
+  public void awaitServer() {
+    if (server != null) {
+      logger.info("服务器正在运行，按 Ctrl+C 停止...");
+      server.await();
+    }
+  }
+
+  /**
    * 初始化ApplicationContext
    */
   private void initializeApplicationContext() {
@@ -64,6 +160,7 @@ public class Application {
     try {
 
       // 创建基于注解的应用上下文，直接扫描包路径
+      logger.info("开始扫描包路径: com.simplespring.example");
       applicationContext = new AnnotationConfigApplicationContext("com.simplespring.example");
 
       logger.info("ApplicationContext 初始化完成");
@@ -88,14 +185,48 @@ public class Application {
       dispatcherServlet = new DispatcherServlet();
       dispatcherServlet.setApplicationContext(applicationContext);
 
-      // 初始化DispatcherServlet
-      dispatcherServlet.init();
+      // 手动初始化DispatcherServlet（因为不是通过容器管理）
+      // 注意：这里我们直接调用自定义的初始化方法
+      initializeDispatcherServletMappings();
 
       logger.info("DispatcherServlet 初始化完成");
 
     } catch (Exception e) {
       logger.error("DispatcherServlet 初始化失败", e);
       throw new RuntimeException("DispatcherServlet 初始化失败", e);
+    }
+  }
+
+  /**
+   * 初始化DispatcherServlet的映射
+   */
+  private void initializeDispatcherServletMappings() {
+    logger.info("开始注册控制器映射...");
+
+    try {
+      // 获取所有 Bean 名称
+      String[] beanNames = applicationContext.getBeanDefinitionNames();
+
+      for (String beanName : beanNames) {
+        try {
+          Object bean = applicationContext.getBean(beanName);
+          Class<?> beanClass = bean.getClass();
+
+          // 检查是否是控制器
+          if (beanClass.isAnnotationPresent(com.simplespring.core.annotation.Controller.class)) {
+            dispatcherServlet.registerController(beanClass, bean);
+            logger.info("已注册控制器: {} (Bean名称: {})", beanClass.getSimpleName(), beanName);
+          }
+        } catch (Exception e) {
+          logger.error("注册控制器失败: {}, 错误: {}", beanName, e.getMessage());
+        }
+      }
+
+      logger.info("控制器映射注册完成");
+
+    } catch (Exception e) {
+      logger.error("初始化DispatcherServlet映射失败", e);
+      throw new RuntimeException("初始化DispatcherServlet映射失败", e);
     }
   }
 
@@ -302,6 +433,11 @@ public class Application {
     logger.info("正在关闭应用...");
 
     try {
+      if (server != null) {
+        server.stop();
+        logger.info("HTTP 服务器已关闭");
+      }
+
       if (dispatcherServlet != null) {
         dispatcherServlet.destroy();
         logger.info("DispatcherServlet 已关闭");
@@ -331,5 +467,12 @@ public class Application {
    */
   public DispatcherServlet getDispatcherServlet() {
     return dispatcherServlet;
+  }
+
+  /**
+   * 获取HTTP服务器
+   */
+  public EmbeddedTomcatServer getServer() {
+    return server;
   }
 }
